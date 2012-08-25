@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011
+ * Copyright (c) 2012
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -51,7 +51,7 @@ main(int argc, char *argv[])
     gdp.polyIsoSurface(HDK_Sample::densityFunction, bounds, 20, 20, 20);
 
     // Save to sphere.bgeo
-    gdp.save("sphere.bgeo", true, NULL);
+    gdp.save("sphere.bgeo", NULL);
 
     return 0;
 }
