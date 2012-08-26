@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011
+ * Copyright (c) 2012
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -110,19 +110,29 @@ SOP_Star::myVariables[] = {
     { 0, 0, 0 },
 };
 
-float
-SOP_Star::getVariableValue(int index, int thread)
+bool
+SOP_Star::evalVariableValue(fpreal &val, int index, int thread)
 {
-    // Note that "gdp" may be null here, so we do the safe thing
-    // and cache values we are interested in.
-    if (myCurrPoint < 0) return 0;
-    switch (index)
+    // myCurrPoint will be negative when we're not cooking so only try to
+    // handle the local variables when we have a valid myCurrPoint index.
+    if (myCurrPoint >= 0)
     {
-	case VAR_PT:	return myCurrPoint;
-	case VAR_NPT:	return myTotalPoints;
+	// Note that "gdp" may be null here, so we do the safe thing
+	// and cache values we are interested in.
+	switch (index)
+	{
+	    case VAR_PT:
+		val = (fpreal) myCurrPoint;
+		return true;
+	    case VAR_NPT:
+		val = (fpreal) myTotalPoints;
+		return true;
+	    default:
+		/* do nothing */;
+	}
     }
     // Not one of our variables, must delegate to the base class.
-    return SOP_Node::getVariableValue(index, thread);
+    return SOP_Node::evalVariableValue(val, index, thread);
 }
 
 OP_Node *
@@ -148,17 +158,16 @@ SOP_Star::disableParms()
 OP_ERROR
 SOP_Star::cookMySop(OP_Context &context)
 {
-    double		 now;
+    fpreal		 now = context.getTime();
     float		 rad, tx, ty, tz;
     int			 divisions, plane, negradius;
     int			 xcoord, ycoord, zcoord;
     float		 tmp, tinc;
+    UT_Vector4		 pos;
     GEO_Point		*ppt;
     GU_PrimPoly		*poly;
     int			 i;
     UT_Interrupt	*boss;
-
-    now = context.getTime();
 
     // Since we don't have inputs, we don't need to lock them.
 
@@ -230,10 +239,12 @@ SOP_Star::cookMySop(OP_Context &context)
 		if (!negradius && rad < 0)
 		    rad = 0;
 
-		ppt = poly->getVertex(i).getPt();
-		ppt->getPos()(xcoord) = cos(tmp) * rad + tx;
-		ppt->getPos()(ycoord) = sin(tmp) * rad + ty;
-		ppt->getPos()(zcoord) = 0 + tz;
+		ppt = poly->getVertexElement(i).getPt();
+		pos = ppt->getPos();
+		pos(xcoord) = cos(tmp) * rad + tx;
+		pos(ycoord) = sin(tmp) * rad + ty;
+		pos(zcoord) = 0 + tz;
+		ppt->setPos(pos);
 	    }
 
 	    // Highlight the star which we have just generated.  This routine

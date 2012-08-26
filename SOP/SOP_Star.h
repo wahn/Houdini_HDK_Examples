@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011
+ * Copyright (c) 2012
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -59,18 +59,30 @@ protected:
 
     /// This function is used to lookup local variables that you have
     /// defined specific to your SOP.
-    virtual float		 getVariableValue(int index, int thread);
+    virtual bool		 evalVariableValue(
+				    fpreal &val,
+				    int index,
+				    int thread);
+    // Add virtual overload that delegates to the super class to avoid
+    // shadow warnings.
+    virtual bool		 evalVariableValue(
+				    UT_String &v,
+				    int i,
+				    int thread)
+				 {
+				     return evalVariableValue(v, i, thread);
+				 }
 
 private:
     /// The following list of accessors simplify evaluating the parameters
     /// of the SOP.
-    int		DIVISIONS(float t)	{ return evalInt  ("divs", 0, t); }
-    float	XRADIUS(float t)	{ return evalFloat("rad", 0, t); }
-    float	YRADIUS(float t)	{ return evalFloat("rad", 1, t); }
+    int		DIVISIONS(fpreal t)	{ return evalInt  ("divs", 0, t); }
+    fpreal	XRADIUS(fpreal t)	{ return evalFloat("rad", 0, t); }
+    fpreal	YRADIUS(fpreal t)	{ return evalFloat("rad", 1, t); }
     int		NEGRADIUS()		{ return evalInt  ("nradius", 0, 0); }
-    float	CENTERX(float t) 	{ return evalFloat("t", 0, t); }
-    float	CENTERY(float t) 	{ return evalFloat("t", 1, t); }
-    float	CENTERZ(float t) 	{ return evalFloat("t", 2, t); }
+    fpreal	CENTERX(fpreal t) 	{ return evalFloat("t", 0, t); }
+    fpreal	CENTERY(fpreal t) 	{ return evalFloat("t", 1, t); }
+    fpreal	CENTERZ(fpreal t) 	{ return evalFloat("t", 2, t); }
     int		ORIENT()		{ return evalInt  ("orient", 0, 0); }
 
     /// Member variables are stored in the actual SOP, not with the geometry
