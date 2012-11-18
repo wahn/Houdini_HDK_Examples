@@ -14,6 +14,10 @@ public:
     virtual const char* formatName(void) const;
     virtual int checkExtension(const char* name);
     virtual int checkMagicNumber(unsigned magic);
+    // the load and save signatures changed between H11 and H12
+    virtual GA_Detail::IOStatus fileLoad(GEO_Detail*, UT_IStream&,
+                                         int ate_magic);
+    virtual GA_Detail::IOStatus fileSave(const GEO_Detail*, ostream&);
 
 protected:
 private:
