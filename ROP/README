@@ -1,0 +1,7 @@
+# before compiling ROP_Radiance:
+setenv SESI_TAGINFO "Produced by: Jan Walter (http://www.janwalter.com)"
+# compile
+hcustom -e ROP_Radiance.C
+# check with sesitag
+sesitag /Users/wahn/Library/Preferences/houdini/12.1/dso/ROP_Radiance.dylib
+
