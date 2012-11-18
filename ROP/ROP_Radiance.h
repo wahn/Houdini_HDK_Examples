@@ -22,6 +22,7 @@ protected:
     virtual ROP_RENDER_CODE endRender(void);
 
 private:
+    fpreal myEndTime;
 };
 
 #endif // __ROP_Radiance_h__

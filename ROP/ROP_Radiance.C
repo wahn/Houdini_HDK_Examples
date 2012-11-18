@@ -68,16 +68,31 @@ ROP_Radiance::construct(OP_Network* net, const char* name, OP_Operator* op) {
 
 int
 ROP_Radiance::startRender(int nframes, fpreal tstart, fpreal tend) {
+    myEndTime = tend;
+    if (error() < UT_ERROR_ABORT) {
+        if (!executePreRenderScript(tstart)) return 0;
+    }
+
     return 1;
 }
 
 ROP_RENDER_CODE
 ROP_Radiance::renderFrame(fpreal time, UT_Interrupt* boss) {
+    if (!executePreFrameScript(time)) return ROP_ABORT_RENDER;
+    // TODO: export a .rad file
+    if (error() < UT_ERROR_ABORT) {
+        if (!executePostFrameScript(time)) return ROP_ABORT_RENDER;
+    }
+
     return ROP_CONTINUE_RENDER;
 }
 
 ROP_RENDER_CODE
 ROP_Radiance::endRender() {
+    if (error() < UT_ERROR_ABORT) {
+        if (!executePostRenderScript(myEndTime)) return ROP_ABORT_RENDER;
+    }
+
     return ROP_CONTINUE_RENDER;
 }
 
