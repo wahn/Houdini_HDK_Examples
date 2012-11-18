@@ -66,6 +66,21 @@ ROP_Radiance::construct(OP_Network* net, const char* name, OP_Operator* op) {
     return new ROP_Radiance(net, name, op);
 }
 
+int
+ROP_Radiance::startRender(int nframes, fpreal tstart, fpreal tend) {
+    return 1;
+}
+
+ROP_RENDER_CODE
+ROP_Radiance::renderFrame(fpreal time, UT_Interrupt* boss) {
+    return ROP_CONTINUE_RENDER;
+}
+
+ROP_RENDER_CODE
+ROP_Radiance::endRender() {
+    return ROP_CONTINUE_RENDER;
+}
+
 // entry point
 
 SYS_VISIBILITY_EXPORT extern void

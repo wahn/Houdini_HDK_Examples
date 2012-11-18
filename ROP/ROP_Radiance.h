@@ -16,6 +16,10 @@ public:
 
 protected:
     ROP_Radiance(OP_Network* net, const char* name, OP_Operator* op);
+    // render methods
+    virtual int startRender(int nframes, fpreal tstart, fpreal tend);
+    virtual ROP_RENDER_CODE renderFrame(fpreal time, UT_Interrupt* boss = 0);
+    virtual ROP_RENDER_CODE endRender(void);
 
 private:
 };
