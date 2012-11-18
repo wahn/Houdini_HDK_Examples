@@ -98,7 +98,7 @@ ROP_Radiance::endRender() {
 
 // entry point
 
-SYS_VISIBILITY_EXPORT extern void
+SYS_VISIBILITY_EXPORT void
 newDriverOperator(OP_OperatorTable* table) {
     table->addOperator(new OP_Operator("radiance",
                                        "Radiance",
