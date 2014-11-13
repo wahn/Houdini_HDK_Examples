@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012
+ * Copyright (c) 2014
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -26,11 +26,12 @@
  */
 
 #include <GU/GU_Detail.h>
+#include <stddef.h>
 
 namespace HDK_Sample {
 
 static float
-densityFunction(const UT_Vector3 &P)
+densityFunction(const UT_Vector3 &P, void *data)
 {
     // Return the signed distance to the unit sphere
     return 1 - P.length();
@@ -48,7 +49,7 @@ main(int argc, char *argv[])
     bounds.setBounds(-1, -1, -1, 1, 1, 1);
 
     // Create an iso-surface
-    gdp.polyIsoSurface(HDK_Sample::densityFunction, bounds, 20, 20, 20);
+    gdp.polyIsoSurface(HDK_Sample::densityFunction, NULL, bounds, 20, 20, 20);
 
     // Save to sphere.bgeo
     gdp.save("sphere.bgeo", NULL);
