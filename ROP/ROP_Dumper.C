@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2012
+* Copyright (c) 2014
 *	Side Effects Software Inc.  All rights reserved.
 *
 * Redistribution and use of Houdini Development Kit samples in source and
@@ -23,16 +23,20 @@
 * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include <fstream.h>
-#include <UT/UT_DSOVersion.h>
-#include <CH/CH_LocalVariable.h>
-#include <PRM/PRM_Include.h>
-#include <OP/OP_OperatorTable.h>
-#include <OP/OP_Director.h>
-#include <SOP/SOP_Node.h>
+#include "ROP_Dumper.h"
+
 #include <ROP/ROP_Error.h>
 #include <ROP/ROP_Templates.h>
-#include "ROP_Dumper.h"
+#include <SOP/SOP_Node.h>
+
+#include <OP/OP_Director.h>
+#include <OP/OP_OperatorTable.h>
+#include <PRM/PRM_Include.h>
+#include <CH/CH_LocalVariable.h>
+
+#include <UT/UT_DSOVersion.h>
+#include <UT/UT_OFStream.h>
+
 
 using namespace	HDK_Sample;
 
@@ -146,7 +150,7 @@ ROP_Dumper::renderFrame(fpreal time, UT_Interrupt *)
     UT_String file_name;
     OUTPUT(file_name, time);
 
-    ofstream os(file_name);
+    UT_OFStream os(file_name);
     printNode(os, OPgetDirector(), 0);
     os.close();
 
