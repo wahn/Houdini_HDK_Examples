@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012
+ * Copyright (c) 2014
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -48,9 +48,6 @@ public:
 protected:
 	     SOP_Star(OP_Network *net, const char *name, OP_Operator *op);
     virtual ~SOP_Star();
-
-    /// Disable parameters according to other parameters.
-    virtual unsigned		 disableParms();
 
 
     /// cookMySop does the actual work of the SOP computing, in this

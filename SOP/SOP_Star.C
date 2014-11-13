@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012
+ * Copyright (c) 2014
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -27,8 +27,8 @@
  */
 
 #include <limits.h>
+#include <SYS/SYS_Math.h>
 #include <UT/UT_DSOVersion.h>
-#include <UT/UT_Math.h>
 #include <UT/UT_Interrupt.h>
 #include <GU/GU_Detail.h>
 #include <GU/GU_PrimPoly.h>
@@ -149,12 +149,6 @@ SOP_Star::SOP_Star(OP_Network *net, const char *name, OP_Operator *op)
 
 SOP_Star::~SOP_Star() {}
 
-unsigned
-SOP_Star::disableParms()
-{
-    return 0;
-}
-
 OP_ERROR
 SOP_Star::cookMySop(OP_Context &context)
 {
@@ -163,10 +157,7 @@ SOP_Star::cookMySop(OP_Context &context)
     int			 divisions, plane, negradius;
     int			 xcoord, ycoord, zcoord;
     float		 tmp, tinc;
-    UT_Vector4		 pos;
-    GEO_Point		*ppt;
     GU_PrimPoly		*poly;
-    int			 i;
     UT_Interrupt	*boss;
 
     // Since we don't have inputs, we don't need to lock them.
@@ -222,7 +213,7 @@ SOP_Star::cookMySop(OP_Context &context)
 	    tinc = M_PI*2 / (float)divisions;
 
 	    // Now, set all the points of the polygon
-	    for (i = 0; i < divisions; i++)
+	    for (int i = 0; i < divisions; i++)
 	    {
 		// Check to see if the user has interrupted us...
 		if (boss->opInterrupt())
@@ -239,12 +230,13 @@ SOP_Star::cookMySop(OP_Context &context)
 		if (!negradius && rad < 0)
 		    rad = 0;
 
-		ppt = poly->getVertexElement(i).getPt();
-		pos = ppt->getPos();
-		pos(xcoord) = cos(tmp) * rad + tx;
-		pos(ycoord) = sin(tmp) * rad + ty;
+		UT_Vector3 pos;
+		pos(xcoord) = SYScos(tmp) * rad + tx;
+		pos(ycoord) = SYSsin(tmp) * rad + ty;
 		pos(zcoord) = 0 + tz;
-		ppt->setPos(pos);
+
+		GA_Offset ptoff = poly->getPointOffset(i);
+		gdp->setPos3(ptoff, pos);
 	    }
 
 	    // Highlight the star which we have just generated.  This routine
@@ -257,13 +249,6 @@ SOP_Star::cookMySop(OP_Context &context)
 	// regardless of what opStart() returns.
 	boss->opEnd();
     }
-
-    // Notify the display cache that we have directly edited
-    // points, this lets NURBs surfaces know that they need to rebuild,
-    // for example.
-    // In this case it isn't needed, but included in case this
-    // code is reused for a more complicated example.
-    gdp->notifyCache(GU_CACHE_ALL);
 
     myCurrPoint = -1;
     return error();
