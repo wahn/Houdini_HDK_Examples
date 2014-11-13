@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012
+ * Copyright (c) 2014
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -59,7 +59,7 @@ public:
 #else
     virtual GA_Detail::IOStatus	 fileLoad(GEO_Detail *, UT_IStream &,
 					int ate_magic);
-    virtual GA_Detail::IOStatus	 fileSave(const GEO_Detail *, ostream &);
+    virtual GA_Detail::IOStatus	 fileSave(const GEO_Detail *, std::ostream &);
 #endif
 };
 
@@ -105,14 +105,12 @@ GEO_VoxelIOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, int ate_magic)
     if (!is.checkToken("VOXELS"))
 	return GA_Detail::IOStatus(false);
 
-    GEO_AttributeHandle		name_gah;
-
 #if defined(HOUDINI_11)
     int				def = -1;
     gdp->addPrimAttrib("name", sizeof(int), GB_ATTRIB_INDEX, &def);
 #endif
     gdp->addStringTuple(GA_ATTRIB_PRIMITIVE, "name", 1);
-    name_gah = gdp->getPrimAttribute("name");
+    GA_RWHandleS name_attrib = gdp->findPrimitiveAttribute("name");
 
     while (is.checkToken("VOLUME"))
     {
@@ -137,14 +135,13 @@ GEO_VoxelIOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, int ate_magic)
 	vol = (GU_PrimVolume *)GU_PrimVolume::build((GU_Detail *)gdp);
 
 	// Set the name of the primitive
-	name_gah.setElement(vol);
-	name_gah.setString(name);
+	name_attrib.set(vol->getMapOffset(), name);
 
 	// Set the center of the volume
 #if defined(HOUDINI_11)
 	vol->getVertex().getPos() = UT_Vector3(tx, ty, tz);
 #else
-	vol->getVertexElement(0).getPt()->setPos(UT_Vector3(tx, ty, tz));
+	gdp->setPos3(vol->getPointOffset(0), UT_Vector3(tx, ty, tz));
 #endif
 
 	UT_Matrix3		xform;
@@ -190,18 +187,16 @@ GEO_VoxelIOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, int ate_magic)
 }
 
 GA_Detail::IOStatus
-GEO_VoxelIOTranslator::fileSave(const GEO_Detail *gdp, ostream &os)
+GEO_VoxelIOTranslator::fileSave(const GEO_Detail *gdp, std::ostream &os)
 {
     // Write our magic token.
-    os << "VOXELS" << endl;
+    os << "VOXELS" << std::endl;
 
     // Now, for each volume in our gdp...
-    const GEO_Primitive		*prim;
-    GEO_AttributeHandle			 name_gah;
-    UT_String				 name;
-    UT_WorkBuffer			 buf;
+    UT_WorkBuffer buf;
 
-    name_gah = gdp->getPrimAttribute("name");
+    GA_ROHandleS name_attrib(gdp->findPrimitiveAttribute("name"));
+    const GEO_Primitive *prim;
 #if defined(HOUDINI_11)
     FOR_ALL_PRIMITIVES(gdp, prim)
 #else
@@ -221,25 +216,22 @@ GEO_VoxelIOTranslator::fileSave(const GEO_Detail *gdp, ostream &os)
 	    // Primitive numbers can now be 64 bit
 	    buf.sprintf("volume_%d", prim->getNum());
 #else
-	    buf.sprintf("volume_%" SYS_PRId64, prim->getNum());
+	    buf.sprintf("volume_%" SYS_PRId64, prim->getMapIndex());
 #endif
+            UT_String name;
 	    name.harden(buf.buffer());
 
 	    // Which is overridden by any name attribute.
-	    if (name_gah.isAttributeValid())
-	    {
-		name_gah.setElement(prim);
-		name_gah.getString(name);
-	    }
+	    if (name_attrib.isValid())
+		name = name_attrib.get(prim->getMapOffset());
 
-	    os << "VOLUME " << name << endl;
-	    const GEO_PrimVolume	*vol = (GEO_PrimVolume *) prim;
-
-	    int		resx, resy, resz;
+	    os << "VOLUME " << name << std::endl;
+	    const GEO_PrimVolume *vol = (const GEO_PrimVolume *)prim;
 
 	    // Save resolution
+	    int resx, resy, resz;
 	    vol->getRes(resx, resy, resz);
-	    os << resx << " " << resy << " " << resz << endl;
+	    os << resx << " " << resy << " " << resz << std::endl;
 
 	    // Save the center and approximate size.
 	    // Calculating the size is complicated as we could be rotated
@@ -247,21 +239,22 @@ GEO_VoxelIOTranslator::fileSave(const GEO_Detail *gdp, ostream &os)
 	    // only supports aligned arrays.
 	    UT_Vector3		p1, p2;
 
-	    UT_Vector3 tmp = vol->getVertexElement(0).getPos();
-	    os << tmp.x() << " " << tmp.y() << " " << tmp.z() << endl;
+	    UT_Vector3 tmp = vol->getPos3(0);
+	    os << tmp.x() << " " << tmp.y() << " " << tmp.z() << std::endl;
 
 	    vol->indexToPos(0, 0, 0, p1);
 	    vol->indexToPos(1, 0, 0, p2);
-	    os << resx * (p1 - p2).length() << " ";
+            float length = (p1 - p2).length();
+	    os << resx * length << " ";
 	    vol->indexToPos(0, 1, 0, p2);
-	    os << resy * (p1 - p2).length() << " ";
+	    os << resy * length << " ";
 	    vol->indexToPos(0, 0, 1, p2);
-	    os << resz * (p1 - p2).length() << endl;
+	    os << resz * length << std::endl;
 
 	    UT_VoxelArrayReadHandleF handle = vol->getVoxelHandle();
 
 	    // Enough of a header, dump the data.
-	    os << "{" << endl;
+	    os << "{" << std::endl;
 	    for (int z = 0; z < resz; z++)
 	    {
 		for (int y = 0; y < resy; y++)
@@ -271,11 +264,11 @@ GEO_VoxelIOTranslator::fileSave(const GEO_Detail *gdp, ostream &os)
 		    {
 			os << (*handle)(x, y, z) << " ";
 		    }
-		    os << endl;
+		    os << std::endl;
 		}
 	    }
-	    os << "}" << endl;
-	    os << endl;
+	    os << "}" << std::endl;
+	    os << std::endl;
 	}
     }
 
