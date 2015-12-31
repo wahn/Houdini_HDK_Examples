@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014
+ * Copyright (c) 2015
  *	Side Effects Software Inc.  All rights reserved.
  *
  * Redistribution and use of Houdini Development Kit samples in source and
@@ -26,15 +26,18 @@
  */
 
 #include <UT/UT_DSOVersion.h>
-#include <UT/UT_IOTable.h>
-#include <stdio.h>
-#include <iostream>
-#include <UT/UT_Assert.h>
-#include <GEO/GEO_AttributeHandle.h>
+
 #include <GU/GU_Detail.h>
 #include <GU/GU_PrimVolume.h>
+#include <GEO/GEO_AttributeHandle.h>
 #include <GEO/GEO_IOTranslator.h>
 #include <SOP/SOP_Node.h>
+#include <UT/UT_Assert.h>
+#include <UT/UT_IOTable.h>
+
+#include <iostream>
+#include <stdio.h>
+
 
 namespace HDK_Sample {
 
@@ -53,14 +56,9 @@ public:
 
     virtual int		checkMagicNumber(unsigned magic);
 
-#if defined(HOUDINI_11)
-    virtual bool	fileLoad(GEO_Detail *gdp, UT_IStream &is, int ate_magic);
-    virtual int		fileSave(const GEO_Detail *gdp, ostream &os);
-#else
     virtual GA_Detail::IOStatus	 fileLoad(GEO_Detail *, UT_IStream &,
-					int ate_magic);
+					  bool ate_magic);
     virtual GA_Detail::IOStatus	 fileSave(const GEO_Detail *, std::ostream &);
-#endif
 };
 
 }
@@ -96,7 +94,7 @@ GEO_VoxelIOTranslator::checkMagicNumber(unsigned magic)
 }
 
 GA_Detail::IOStatus
-GEO_VoxelIOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, int ate_magic)
+GEO_VoxelIOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, bool ate_magic)
 {
     // Convert our stream to ascii.
     UT_IStreamAutoBinary	forceascii(is, false);
@@ -110,7 +108,7 @@ GEO_VoxelIOTranslator::fileLoad(GEO_Detail *gdp, UT_IStream &is, int ate_magic)
     gdp->addPrimAttrib("name", sizeof(int), GB_ATTRIB_INDEX, &def);
 #endif
     gdp->addStringTuple(GA_ATTRIB_PRIMITIVE, "name", 1);
-    GA_RWHandleS name_attrib = gdp->findPrimitiveAttribute("name");
+    GA_RWHandleS name_attrib(gdp->findPrimitiveAttribute("name"));
 
     while (is.checkToken("VOLUME"))
     {
@@ -216,7 +214,7 @@ GEO_VoxelIOTranslator::fileSave(const GEO_Detail *gdp, std::ostream &os)
 	    // Primitive numbers can now be 64 bit
 	    buf.sprintf("volume_%d", prim->getNum());
 #else
-	    buf.sprintf("volume_%" SYS_PRId64, prim->getMapIndex());
+	    buf.sprintf("volume_%" SYS_PRId64, (exint)prim->getMapIndex());
 #endif
             UT_String name;
 	    name.harden(buf.buffer());
